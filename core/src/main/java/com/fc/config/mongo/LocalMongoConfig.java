@@ -1,4 +1,4 @@
-package com.fc.config;
+package com.fc.config.mongo;
 
 import com.mongodb.ConnectionString;
 import jakarta.annotation.PostConstruct;
@@ -6,11 +6,13 @@ import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.mongodb.MongoDatabaseFactory;
 import org.springframework.data.mongodb.core.SimpleMongoClientDatabaseFactory;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.DockerImageName;
 
+@Profile("test")
 @Slf4j
 @Configuration
 public class LocalMongoConfig {

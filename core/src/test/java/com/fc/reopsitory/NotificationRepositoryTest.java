@@ -128,8 +128,13 @@ class NotificationRepositoryIntegrationTest extends IntegrationTest {
         Instant pivot = last.getOccurredAt();
         Slice<Notification> secondResult = sut.findAllByUserIdAndOccurredAtLessThanOrderByOccurredAtDesc(userId,pivot,page); // pivot보다 이전의 시간 조회
 
+        Notification first = secondResult.getContent().get(0);
+        Notification second = secondResult.getContent().get(1);
+
         assertEquals(2,secondResult.getContent().size()); // 조회 결과 사이즈가 같은지 테스트
         assertFalse(secondResult.hasNext()); // 더 이상 가져올거 없음
+
+        assertTrue(first.getOccurredAt().isAfter(second.getOccurredAt()));
     }
 
     private CommentNotification createCommentNotification(String id) {

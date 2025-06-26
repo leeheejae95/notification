@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.Optional;
 
 @Slf4j
@@ -16,7 +17,7 @@ public class NotificationGetService {
     @Autowired
     NotificationRepository notificationRepository;
 
-    public Optional<Notification> getNotificationByTypeAndCommentId(NotificationType type, Long commentId) { // 알림조회?? 댓글조회아님?
+    public Optional<Notification> getNotificationByTypeAndCommentId(NotificationType type, Long commentId) {
         return notificationRepository.findByTypeAndCommentId(type,commentId);
     }
 
@@ -27,5 +28,15 @@ public class NotificationGetService {
 
     public Optional<Notification> getNotificationByTypeAndUserIdAndFollowerId(NotificationType type, Long userIdId, Long followerId) {
         return notificationRepository.findByTypeAndUserIdAndFollowerId(type, userIdId, followerId);
+    }
+
+    public Instant getLatestUpdatedAt(Long userId) {
+        Optional<Notification> notification = notificationRepository.findFirstByUserIdOrderByLastUpdateAtDesc(userId);
+
+        if(notification.isEmpty()) { // 알림이 없을 경우 null
+            return  null;
+        }
+
+        return notification.get().getLastUpdateAt();
     }
 }

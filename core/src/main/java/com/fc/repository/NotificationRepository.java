@@ -8,6 +8,7 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import javax.swing.text.html.Option;
 import java.time.Instant;
 import java.util.Optional;
 
@@ -31,4 +32,6 @@ public interface NotificationRepository extends MongoRepository<Notification, St
     Slice<Notification> findAllByUserIdOrderByOccurredAtDesc(Long userId, Pageable page);
 
     Slice<Notification> findAllByUserIdAndOccurredAtLessThanOrderByOccurredAtDesc(Long userId, Instant occurredAt, Pageable page);
+
+    Optional<Notification> findFirstByUserIdOrderByLastUpdateAtDesc(Long userId); // 가장 최신 업데이트 시간 조회
 }

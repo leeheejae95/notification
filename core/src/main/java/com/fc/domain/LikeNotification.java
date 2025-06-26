@@ -20,7 +20,7 @@ public class LikeNotification extends Notification{// 좋아요 알림을 저장
         this.likerIds = likerIds;
     }
 
-    public void addLiker(Long likerId, Instant occurredAt, Instant now, Instant retention) { // 도메인 클래스가 행동을 가지도록??
+    public void addLiker(Long likerId, Instant occurredAt, Instant now, Instant retention) {
         this.likerIds.add(likerId);
         this.setOccurredAt(occurredAt); // 신규이벤트 발생으로 업데이트
         this.setLastUpdateAt(now);

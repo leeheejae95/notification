@@ -17,7 +17,7 @@ public class NotificationGetService {
     @Autowired
     NotificationRepository notificationRepository;
 
-    public Optional<Notification> getNotificationByTypeAndCommentId(NotificationType type, Long commentId) { // 알림조회?? 댓글조회아님?
+    public Optional<Notification> getNotificationByTypeAndCommentId(NotificationType type, Long commentId) {
         return notificationRepository.findByTypeAndCommentId(type,commentId);
     }
 

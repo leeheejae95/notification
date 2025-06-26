@@ -55,14 +55,14 @@ public class LikeAddTask {
         Instant retention = Instant.now().plus(90, ChronoUnit.DAYS);
         if(notification.isPresent()) {
             // 있는거 업데이트
-            return updateNotification((LikeNotification) notification.get(), event, now, retention); // 왜 이렇게 들어가?
+            return updateNotification((LikeNotification) notification.get(), event, now, retention);
         } else {
             // 신규 생성
             return createNotification(post, event,now, retention);
         }
     }
 
-    private Notification updateNotification(LikeNotification likeNotification, LikeEvent event, Instant now, Instant retention) { // Notification으로 해주면 안됨?
+    private Notification updateNotification(LikeNotification likeNotification, LikeEvent event, Instant now, Instant retention) {
         likeNotification.addLiker(
                 event.getUserId(),
                 event.getCreatedAt(),

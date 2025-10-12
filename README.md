@@ -15,7 +15,7 @@
 
 ## 기술 스택
 
-- **Java 17**
+- **Java 21**
 - **Spring Boot 3.1.4**
 - **Spring Security 6.x**
 - **Spring Data JPA**

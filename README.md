@@ -16,62 +16,95 @@
 ## 기술 스택
 
 - **Java 21**
-- **Spring Boot 3.1.4**
-- **Spring Security 6.x**
+- **Spring Boot 3.x**
+- **Apache Kafka**
 - **Spring Data JPA**
-- **MariaDB**
+- **MongoDB**
 - **Lombok**
 - **Gradle**
 
 ---
 ```plaintext
-main
-└── java
-    └── state
-        ├── admin                            # 관리자 도메인
-        │   └── userManage                   #
-        │       ├── application              #
-        │       │   ├── command              #
-        │       │   ├── common               #
-        │       │   │   ├── api              #
-        │       │   │   ├── error            #
-        │       │   │   ├── exception        #
-        │       │   │   └── exceptionhandler #
-        │       │   ├── fasade               #
-        │       │   └── processor            #
-        │       ├── domain                   #
-        │       │   ├── auth                 #
-        │       │   ├── entity               #
-        │       │   └── repository           #
-        │       ├── infrastructure           #
-        │       │   └── jpa                  #
-        │       └── presentation             #
-        │           ├── request              #
-        │           └── response             #
-        ├── common                           # 공통 설정 및 유틸리티
-        │   ├── config                       # 설정 파일
-        │   │   └── StateSecurityConfig      # Spring Security 설정
-        │   ├── command                      # 응답 command
-        │   └── exception                    # 에러 공통
-        └── member                           # 회원(Member) 도메인
-            ├── application                  # 애플리케이션 계층
-            │   ├── command                  # Command 객체 정의
-            │   │   └── member               # member command
-            │   ├── fasade                   # 애플리케이션 파사드
-            │   └── processor                # 비즈니스 로직 처리
-            │       ├── department           # 부서 비즈니스 로직
-            │       ├── member               # 사용자 비즈니스 로직
-            │       └── position             # 직위 비즈니스 로직
-            ├── domain                       # 도메인 계층
-            │   ├── entity                   # 엔티티
-            │   ├── exception                # 예외 처리
-            │   │   └── custom               # custom 예외 처리
-            │   └── repository               # 도메인 레벨의 Repository 인터페이스
-            ├── infrastructure               # 인프라스트럭처 계층
-            │   └── JPA                      # JPA 기반 Repository 구현
-            └── presentation                 # 프레젠테이션 계층 (REST 컨트롤러)
-                ├── apis                     # 컨트롤러
-                ├── request                  # 요청 DTO
-                │   └── member               # member 요청 DTO
-                └── response                 # 응답 DTO
+notification/
+├── settings.gradle.kts
+├── build.gradle.kts                  # 루트: 공통 플러그인/버전/리포지토리
+├── gradle/
+│   └── ...                           # Gradle Wrapper
+├── .docker/
+│   └── docker-compose.yml            # zookeeper/kafka/redis/mongo 등 로컬 인프라
+├── core                              # 도메인·저장소·공통 설정 모듈
+│   ├── build.gradle.kts
+│   └── src
+│       ├── main
+│       │   ├── java
+│       │   │   └── com.example.notification
+│       │   │       ├── common                         # 공통
+│       │   │       │   ├── config                     # Mongo/Redis/공통 Bean 설정
+│       │   │       │   ├── error                      # 에러 코드/응답 규격
+│       │   │       │   └── exception                  # 공통 예외/핸들러 베이스
+│       │   │       └── domain                         # 도메인 계층
+│       │   │           ├── model                      # 엔티티/레코드(예: Notification)
+│       │   │           ├── repository                 # Port(인터페이스)
+│       │   │           └── service                    # 도메인 서비스(비즈 규칙)
+│       │   └── resources
+│       │       └── application.yaml                   # 코어 모듈 기본 설정
+│       └── test
+│           └── java
+│               └── ...                                # JUnit5/Testcontainers 등
+│
+├── api                               # REST API 수신/조회 모듈
+│   ├── build.gradle.kts
+│   └── src
+│       ├── main
+│       │   ├── java
+│       │   │   └── com.example.notification.api
+│       │   │       ├── presentation                  # 프레젠테이션 계층
+│       │   │       │   └── controller                # REST 컨트롤러
+│       │   │       ├── application                   # 애플리케이션 계층
+│       │   │       │   ├── command                   # 요청 Command 객체
+│       │   │       │   ├── facade                    # 유즈케이스 파사드
+│       │   │       │   └── processor                 # 유즈케이스 처리기
+│       │   │       ├── infrastructure                # 인프라(발행/연동)
+│       │   │       │   ├── kafka                     # Kafka Producer/Config
+│       │   │       │   └── mapper                    # DTO ↔ 도메인 매핑
+│       │   │       └── common                        # API 공통
+│       │   │           ├── dto                       # request/response DTO
+│       │   │           ├── validation                # 입력 검증
+│       │   │           └── exceptionhandler          # ControllerAdvice
+│       │   └── resources
+│       │       ├── application.yaml                  # API 기본 설정
+│       │       ├── application-local.yaml            # 로컬 프로필(API)
+│       │       └── static/docs                       # OpenAPI/Swagger 정적 리소스(선택)
+│       └── test
+│           └── java
+│               └── ...                               # WebMvcTest/통합테스트
+│
+├── consumer                         # Kafka 이벤트 컨슈머 모듈
+│   ├── build.gradle.kts
+│   └── src
+│       ├── main
+│       │   ├── java
+│       │   │   └── com.example.notification.consumer
+│       │   │       ├── application                   # 애플리케이션 계층
+│       │   │       │   ├── handler                   # 이벤트별 핸들러(comment/like/follow)
+│       │   │       │   └── processor                 # 처리 흐름/트랜잭션 경계
+│       │   │       ├── domain                        # 도메인 계층
+│       │   │       │   ├── event                     # 이벤트 모델(메시지 스키마)
+│       │   │       │   └── policy                    # 재시도/백오프/멱등 규칙
+│       │   │       ├── infrastructure                # 인프라 계층
+│       │   │       │   ├── kafka                     # Consumer, DLT, 컨테이너 설정
+│       │   │       │   └── mapper                    # 이벤트→도메인 변환
+│       │   │       └── common                        # 공통(로그/메트릭)
+│       │   └── resources
+│       │       ├── application.yaml                  # Consumer 기본 설정
+│       │       ├── application-local.yaml            # 로컬 프로필(이벤트 바인딩)
+│       │       └── bindings.yaml                     # Spring Cloud Stream 바인딩(선택)
+│       └── test
+│           └── java
+│               └── ...                               # @EmbeddedKafka/Testcontainers
+│
+└── docs                             # 문서/다이어그램(선택)
+    ├── architecture.png             # 아키텍처 다이어그램 (API→Kafka→Consumer→Mongo/Redis)
+    ├── erd.png                      # ERD/주요 컬렉션 구조
+    └── sequence-notification.png    # 시퀀스 다이어그램(요청→발행→소비→저장/응답)
 ```

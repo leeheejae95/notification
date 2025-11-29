@@ -1,110 +1,99 @@
+# Notification Service (알림센터)
 
-## 프로젝트 개요
-  #### 알림(consumer)서비스 개발 프로젝트
----
-
-## 주요 기능
-  #### 01. 알림센터 요규사항 분석 및 설계
-  #### 02. 알림센터 프로젝트 구성
-  #### 03. 알림 도메인 생성 및 저장 구현
-  #### 04. Kafka Event  Consumer 구현
-  #### 05. 알림 종류에 따른 알림생성/삭제 구현
-  #### 06. 알림 목록 조회 API구현
-  #### 07. 기타 알림센터 API구현
-  #### 08. 알림센터 성능 최적화
-
-## 기술 스택
-
-- **Java 21**
-- **Spring Boot 3.x**
-- **Apache Kafka**
-- **Spring Data JPA**
-- **MongoDB**
-- **Lombok**
-- **Gradle**
+Kafka 이벤트를 소비해서 MongoDB에 알림을 저장하고, REST API로 조회/읽음 처리까지 제공하는 알림센터 서비스입니다.  
+API 모듈과 Consumer 모듈을 분리하고, 공통 도메인은 Core 모듈로 분리하여 **확장성과 유지보수성**을 고려해 설계했습니다.
 
 ---
-```plaintext
+
+## 1. 주요 기능
+
+- **알림 도메인 설계 및 저장**
+    - 사용자별 알림 엔티티 설계
+    - MongoDB 기반 알림 저장/조회
+
+- **Kafka 기반 알림 Consumer**
+    - 댓글, 좋아요, 팔로우 등 여러 이벤트 타입 처리
+    - 이벤트 별 핸들러 분리로 유즈케이스 확장 용이
+
+- **알림 생성 / 삭제 / 읽음 처리**
+    - 알림 목록 조회 API
+    - 알림 읽음 처리, 단건/다건 삭제
+
+- **알림센터 성능 최적화 (설계 관점)**
+    - 읽기 전용 기능을 MongoDB로 분리
+    - 이벤트 기반 비동기 처리로 서비스 간 결합도 감소
+
+---
+
+## 2. 기술 스택
+
+- **Language**: Java 21
+- **Framework**: Spring Boot 3.x
+- **Messaging**: Apache Kafka
+- **DB**: MongoDB
+- **ORM**: Spring Data JPA
+- **Infra**: Docker / Docker Compose
+- **Build**: Gradle (Kotlin DSL)
+- **etc.**: Lombok
+
+---
+
+## 3. 아키텍처 개요
+
+알림센터는 다음과 같은 흐름으로 동작합니다.
+
+1. 외부 서비스에서 **Kafka Topic** 으로 이벤트 발행 (예: 댓글 생성, 좋아요, 팔로우 등)
+2. `consumer` 모듈이 Kafka 이벤트를 **구독(consume)** 하고, 이벤트 타입에 따라 핸들러에서 비즈니스 로직 처리
+3. 처리된 결과를 `core` 모듈의 도메인/레포지토리를 통해 MongoDB에 저장
+4. 클라이언트(웹/앱)는 `api` 모듈의 REST API를 통해 **알림 목록 조회 / 읽음 처리 / 삭제** 수행
+
+---
+
+## 4. 모듈 구조
+
+```text
 notification/
 ├── settings.gradle.kts
-├── build.gradle.kts                  # 루트: 공통 플러그인/버전/리포지토리
+├── build.gradle.kts          # 루트 공통 설정
 ├── gradle/
-│   └── ...                           # Gradle Wrapper
+│   └── ...                   # Gradle Wrapper
 ├── .docker/
-│   └── docker-compose.yml            # zookeeper/kafka/redis/mongo 등 로컬 인프라
-├── core                              # 도메인·저장소·공통 설정 모듈
+│   └── docker-compose.yml    # zookeeper / kafka / mongo 등 로컬 인프라
+├── core                      # 도메인 · 저장소 · 공통 설정
 │   ├── build.gradle.kts
-│   └── src
-│       ├── main
-│       │   ├── java
-│       │   │   └── com.example.notification
-│       │   │       ├── common                         # 공통
-│       │   │       │   ├── config                     # Mongo/Redis/공통 Bean 설정
-│       │   │       │   ├── error                      # 에러 코드/응답 규격
-│       │   │       │   └── exception                  # 공통 예외/핸들러 베이스
-│       │   │       └── domain                         # 도메인 계층
-│       │   │           ├── model                      # 엔티티/레코드(예: Notification)
-│       │   │           ├── repository                 # Port(인터페이스)
-│       │   │           └── service                    # 도메인 서비스(비즈 규칙)
-│       │   └── resources
-│       │       └── application.yaml                   # 코어 모듈 기본 설정
-│       └── test
-│           └── java
-│               └── ...                                # JUnit5/Testcontainers 등
-│
-├── api                               # REST API 수신/조회 모듈
+│   └── src/main/java/com.example.notification
+│       ├── common
+│       │   ├── config        # Mongo/Redis 등 공통 Bean 설정
+│       │   ├── error         # 에러 코드, 공통 응답 규격
+│       │   └── exception     # 공통 예외
+│       └── domain
+│           ├── model         # Notification 등 도메인 모델
+│           ├── repository    # 도메인 Repository 인터페이스
+│           └── service       # 도메인 서비스(비즈니스 규칙)
+├── api                       # REST API 모듈
 │   ├── build.gradle.kts
-│   └── src
-│       ├── main
-│       │   ├── java
-│       │   │   └── com.example.notification.api
-│       │   │       ├── presentation                  # 프레젠테이션 계층
-│       │   │       │   └── controller                # REST 컨트롤러
-│       │   │       ├── application                   # 애플리케이션 계층
-│       │   │       │   ├── command                   # 요청 Command 객체
-│       │   │       │   ├── facade                    # 유즈케이스 파사드
-│       │   │       │   └── processor                 # 유즈케이스 처리기
-│       │   │       ├── infrastructure                # 인프라(발행/연동)
-│       │   │       │   ├── kafka                     # Kafka Producer/Config
-│       │   │       │   └── mapper                    # DTO ↔ 도메인 매핑
-│       │   │       └── common                        # API 공통
-│       │   │           ├── dto                       # request/response DTO
-│       │   │           ├── validation                # 입력 검증
-│       │   │           └── exceptionhandler          # ControllerAdvice
-│       │   └── resources
-│       │       ├── application.yaml                  # API 기본 설정
-│       │       ├── application-local.yaml            # 로컬 프로필(API)
-│       │       └── static/docs                       # OpenAPI/Swagger 정적 리소스(선택)
-│       └── test
-│           └── java
-│               └── ...                               # WebMvcTest/통합테스트
-│
-├── consumer                         # Kafka 이벤트 컨슈머 모듈
-│   ├── build.gradle.kts
-│   └── src
-│       ├── main
-│       │   ├── java
-│       │   │   └── com.example.notification.consumer
-│       │   │       ├── application                   # 애플리케이션 계층
-│       │   │       │   ├── handler                   # 이벤트별 핸들러(comment/like/follow)
-│       │   │       │   └── processor                 # 처리 흐름/트랜잭션 경계
-│       │   │       ├── domain                        # 도메인 계층
-│       │   │       │   ├── event                     # 이벤트 모델(메시지 스키마)
-│       │   │       │   └── policy                    # 재시도/백오프/멱등 규칙
-│       │   │       ├── infrastructure                # 인프라 계층
-│       │   │       │   ├── kafka                     # Consumer, DLT, 컨테이너 설정
-│       │   │       │   └── mapper                    # 이벤트→도메인 변환
-│       │   │       └── common                        # 공통(로그/메트릭)
-│       │   └── resources
-│       │       ├── application.yaml                  # Consumer 기본 설정
-│       │       ├── application-local.yaml            # 로컬 프로필(이벤트 바인딩)
-│       │       └── bindings.yaml                     # Spring Cloud Stream 바인딩(선택)
-│       └── test
-│           └── java
-│               └── ...                               # @EmbeddedKafka/Testcontainers
-│
-└── docs                             # 문서/다이어그램(선택)
-    ├── architecture.png             # 아키텍처 다이어그램 (API→Kafka→Consumer→Mongo/Redis)
-    ├── erd.png                      # ERD/주요 컬렉션 구조
-    └── sequence-notification.png    # 시퀀스 다이어그램(요청→발행→소비→저장/응답)
-```
+│   └── src/main/java/com.example.notification.api
+│       ├── presentation      # Controller
+│       ├── application
+│       │   ├── command       # 요청 Command 객체
+│       │   ├── facade        # 유즈케이스 파사드
+│       │   └── processor     # 유즈케이스 처리기
+│       ├── infrastructure
+│       │   ├── kafka         # Kafka Producer/Config (알림 발행이 필요하다면)
+│       │   └── mapper        # DTO ↔ 도메인 매핑
+│       └── common
+│           ├── dto           # Request/Response DTO
+│           ├── validation    # 입력값 검증
+│           └── exceptionhandler # Global Exception 처리
+└── consumer                  # Kafka Consumer 모듈
+    ├── build.gradle.kts
+    └── src/main/java/com.example.notification.consumer
+        ├── application
+        │   ├── handler       # 이벤트 타입별 핸들러
+        │   └── processor     # 처리 흐름/트랜잭션 경계
+        ├── domain
+        │   ├── event         # Kafka 이벤트 메시지 스키마
+        │   └── policy        # 재시도/백오프/멱등 처리 규칙
+        └── infrastructure
+            ├── kafka         # Kafka Listener/Container 설정
+            └── mapper        # 이벤트 → 도메인 변환

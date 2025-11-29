@@ -98,6 +98,7 @@ notification/
             ├── kafka         # Kafka Listener/Container 설정
             └── mapper        # 이벤트 → 도메인 변환
 
+```
 
 ## 5. 주요 코드 링크
 

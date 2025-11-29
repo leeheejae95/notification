@@ -97,3 +97,39 @@ notification/
         └── infrastructure
             ├── kafka         # Kafka Listener/Container 설정
             └── mapper        # 이벤트 → 도메인 변환
+
+
+## 5. 주요 코드 링크
+
+### 5-1. 알림 조회 / 읽음 처리 API (API 모듈)
+
+- 사용자 알림 목록 조회  
+  - [UserNotificationController](api/src/main/java/com/fc/controller/UserNotificationController.java)
+- 새로운 알림 여부 체크  
+  - [CheckNewNotificationController](api/src/main/java/com/fc/controller/CheckNewNotificationController.java)
+- 알림 읽음 처리  
+  - [NotificationReadController](api/src/main/java/com/fc/controller/NotificationReadController.java)
+
+---
+
+### 5-2. 알림 도메인 서비스 (Core 모듈)
+
+- 알림 저장/생성 비즈니스 로직  
+  - [NotificationSaveService](core/src/main/java/com/fc/service/NotificationSaveService.java)
+- 사용자 알림 목록 조회 로직  
+  - [NotificationListService](core/src/main/java/com/fc/service/NotificationListService.java)
+- 알림 삭제 로직  
+  - [NotificationRemoveService](core/src/main/java/com/fc/service/NotificationRemoveService.java)
+- 알림 단건 조회 로직  
+  - [NotificationGetService](core/src/main/java/com/fc/service/NotificationGetService.java)
+
+---
+
+### 5-3. Kafka 이벤트 Consumer (Consumer 모듈)
+
+- 댓글 이벤트 알림 생성  
+  - [CommentEventConsumer](consumer/src/main/java/com/fc/consumer/CommentEventConsumer.java)
+- 좋아요 이벤트 알림 생성  
+  - [LikeEventConsumer](consumer/src/main/java/com/fc/consumer/LikeEventConsumer.java)
+- 팔로우 이벤트 알림 생성  
+  - [FollowEventConsumer](consumer/src/main/java/com/fc/consumer/FollowEventConsumer.java)

@@ -54,49 +54,44 @@ API 모듈과 Consumer 모듈을 분리하고, 공통 도메인은 Core 모듈�
 ```text
 notification/
 ├── settings.gradle.kts
-├── build.gradle.kts          # 루트 공통 설정
+├── build.gradle.kts            # 루트 공통 설정
 ├── gradle/
-│   └── ...                   # Gradle Wrapper
+│   └── ...                     # Gradle Wrapper
 ├── .docker/
-│   └── docker-compose.yml    # zookeeper / kafka / mongo 등 로컬 인프라
-├── core                      # 도메인 · 저장소 · 공통 설정
+│   ├── docker-compose.yml      # zookeeper / kafka / mongo / redis 로컬 인프라
+│   └── kafka/
+│       └── docker-compose-single-kafka.yml   # 단일 Kafka 실행용
+├── core/                       # 도메인, 저장소, 공통 설정 모듈
 │   ├── build.gradle.kts
-│   └── src/main/java/com.example.notification
-│       ├── common
-│       │   ├── config        # Mongo/Redis 등 공통 Bean 설정
-│       │   ├── error         # 에러 코드, 공통 응답 규격
-│       │   └── exception     # 공통 예외
-│       └── domain
-│           ├── model         # Notification 등 도메인 모델
-│           ├── repository    # 도메인 Repository 인터페이스
-│           └── service       # 도메인 서비스(비즈니스 규칙)
-├── api                       # REST API 모듈
+│   └── src/main/java/com/fc
+│       ├── client/             # 외부 API 호출 Client (사용자 서비스 조회 등)
+│       ├── config/             # Mongo / Redis SpringConfig (dockerProfile 포함)
+│       ├── domain/             # 도메인 모델 + 서비스 + 리포지토리
+│       │   ├── event/          # 이벤트용 DTO
+│       │   ├── model/          # Notification / 각 알림 타입 (댓글, 팔로우 등)
+│       │   ├── repository/     # MongoRepository 인터페이스 정의
+│       │   └── service/        # 알림 저장/조회/삭제/신규 여부 판단 서비스
+│       ├── error/              # 에러 코드 정의
+│       ├── exception/          # 커스텀 예외
+│       ├── response/           # 공통 응답 모델 (Response<T>)
+│       └── util/               # 유틸리티 (JsonUtils 등)
+├── api/                        # REST API 모듈
 │   ├── build.gradle.kts
-│   └── src/main/java/com.example.notification.api
-│       ├── presentation      # Controller
-│       ├── application
-│       │   ├── command       # 요청 Command 객체
-│       │   ├── facade        # 유즈케이스 파사드
-│       │   └── processor     # 유즈케이스 처리기
-│       ├── infrastructure
-│       │   ├── kafka         # Kafka Producer/Config
-│       │   └── mapper        # DTO ↔ 도메인 매핑
-│       └── common
-│           ├── dto           # Request/Response DTO
-│           ├── validation    # 입력값 검증
-│           └── exceptionhandler # Global Exception 처리
-└── consumer                  # Kafka Consumer 모듈
-    ├── build.gradle.kts
-    └── src/main/java/com.example.notification.consumer
-        ├── application
-        │   ├── handler       # 이벤트 타입별 핸들러
-        │   └── processor     # 처리 흐름/트랜잭션 경계
-        ├── domain
-        │   ├── event         # Kafka 이벤트 메시지 스키마
-        │   └── policy        # 재시도/백오프/멱등 처리 규칙
-        └── infrastructure
-            ├── kafka         # Kafka Listener/Container 설정
-            └── mapper        # 이벤트 → 도메인 변환
+│   └── src/main/java/com/fc
+│       ├── controller/         # Notification API (조회, 읽음 처리 등)
+│       ├── dto/                # Request / Response DTO
+│       ├── service/            # API 계층 서비스 (Facade 역할)
+│       ├── mapper/             # DTO ↔ 도메인 변환
+│       └── validator/          # 요청 검증기
+├── consumer/                   # Kafka Consumer 모듈
+│   ├── build.gradle.kts
+│   └── src/main/java/com/fc
+│       ├── consumer/           # Kafka Listener + 이벤트 수신 Entry Point
+│       ├── controller/         # 테스트용 이벤트 수신 HTTP 엔드포인트
+│       ├── event/              # Kafka에서 수신하는 이벤트 스키마 (CommentEvent 등)
+│       ├── handler/            # 이벤트 유형별 핸들러 (댓글/좋아요/팔로우 등)
+│       ├── processor/          # 이벤트 처리, 멱등 처리, 도메인 호출
+└──     └── util/               # 공통 처리 유틸
 
 ```
 

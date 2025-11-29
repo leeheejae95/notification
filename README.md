@@ -79,7 +79,7 @@ notification/
 │       │   ├── facade        # 유즈케이스 파사드
 │       │   └── processor     # 유즈케이스 처리기
 │       ├── infrastructure
-│       │   ├── kafka         # Kafka Producer/Config (알림 발행이 필요하다면)
+│       │   ├── kafka         # Kafka Producer/Config
 │       │   └── mapper        # DTO ↔ 도메인 매핑
 │       └── common
 │           ├── dto           # Request/Response DTO
